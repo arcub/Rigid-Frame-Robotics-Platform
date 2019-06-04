@@ -29,6 +29,8 @@ namespace RigidFrame_Development
 		public bool lockedInPlace = false;
 		public VertexType vertexType;
 
+		public float massAtVertex = 0.0f; // If non-zero, will be tracked by Bmod_BalancePosition
+
 		//public Vector3 offset;
 
 			// Use this for initialization

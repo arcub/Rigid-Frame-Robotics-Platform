@@ -90,9 +90,9 @@ namespace RigidFrame_Development
 					vertexScript.z = z;
 					// Check for lock character
 					if (splits.Length>4) {
-						if (splits[4]=="l") {
-							vertexScript.lockedInPlace = true;
-						}
+						// Replacing lock character with mass of vertex
+						float massGet = float.Parse(splits[4]);
+						vertexScript.massAtVertex = massGet;
 					}
 					verticesGameObjectBuild.Add(vertexGameObject);
 					verticesBuild.Add(vertexScript);
@@ -203,7 +203,7 @@ namespace RigidFrame_Development
 					dupliVertex.x = attachToVertex.x;
 					dupliVertex.y = attachToVertex.y;
 					dupliVertex.z = attachToVertex.z;
-					dupliVertex.name = attachToVertex.name + "_Duplicate";
+					dupliVertex.name = attachToVertex.name + "_BalancePositioner";
 					vertexInstantObject.transform.localPosition = new Vector3(dupliVertex.x, dupliVertex.y, dupliVertex.z);
 					dupliVertex.lockedInPlace = true; // The duplicated vertex is not allowed to roam
 					GameObject strutInstantObject = Instantiate(StrutInstantiator, this.transform); // Because Unity.
@@ -219,6 +219,7 @@ namespace RigidFrame_Development
 					// Set the duplicated vertex to be moved by the balance positioner
 					balPosMod.controlVertex = dupliVertex;
 					balPosBuild.Add(balPolObj);
+
 				} else if (objLine.StartsWith("dishol")) {
 					// Distance holder behaviour module building here
 					string[] splits = objLine.Split(' ');
@@ -236,6 +237,7 @@ namespace RigidFrame_Development
 					dupliVertex.x = attachToVertex.x;
 					dupliVertex.y = attachToVertex.y;
 					dupliVertex.z = attachToVertex.z;
+					dupliVertex.name = attachToVertex.name + "_DistanceHolder";
 					vertexInstantObject.transform.localPosition = new Vector3(dupliVertex.x, dupliVertex.y, dupliVertex.z);
 					dupliVertex.lockedInPlace = true; // The duplicated vertex is not allowed to roam
 					GameObject strutInstant = Instantiate(StrutInstantiator, this.transform); // Because Unity.
@@ -274,6 +276,7 @@ namespace RigidFrame_Development
 					dupliVertex.x = attachToVertex.x;
 					dupliVertex.y = attachToVertex.y;
 					dupliVertex.z = attachToVertex.z;
+					dupliVertex.name = attachToVertex.name + "_AnchorPoint" + priorityValue;
 					vertexInstantObject.transform.localPosition = new Vector3(dupliVertex.x, dupliVertex.y, dupliVertex.z);
 					dupliVertex.lockedInPlace = true; // The duplicated vertex is not allowed to roam
 					GameObject strutInstant = Instantiate(StrutInstantiator, this.transform); // Because Unity.
@@ -317,6 +320,13 @@ namespace RigidFrame_Development
 				allStruts = strutsBuild;
 				angleLinks = angleViewBuild;
 				compReps = compRepBuild;
+				// Get the balance positioners to gather the vertices with mass.
+				if(balPosBuild.Count!=0) {
+					foreach(GameObject balBoxObj in balPosBuild) {
+						BMod_BalancePosition balPol = balBoxObj.GetComponent<BMod_BalancePosition>();
+						balPol.buildListOfVerticesWithMass(allVertices);
+					}
+				}
 				this.calculateDistancesThenOrientate();
 				// Get the initial measured angles for each angle link.
 				foreach(GameObject angleLinkObj in angleViewBuild) {

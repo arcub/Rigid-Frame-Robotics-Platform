@@ -11,6 +11,7 @@ namespace RigidFrame_Development
 		BMod_DistanceHolder[] distanceHolders; // Distance holders should be in order to form a perimeter, no cross-overs.
 		BMod_AnchorPoint[] anchorPoints;
 		
+		RFrame_Vertex[] verticesWithMass; // Any vertices that have mass attached to them.
 		public Vector3 previousSlideOffset; // Use to detect when the slide vectors need updating.
 		public Vector3 slideOffset; // The amount of the offset from this balance positions vertex to move.
 		public Vector3 noncumulativeOffset; // This is used to determine how far away the drop point is from the original anchor lock point.
@@ -436,6 +437,17 @@ namespace RigidFrame_Development
 				}
 			}
 		}
+
+		public void buildListOfVerticesWithMass(List<RFrame_Vertex> verticesToCheck) {
+			List<RFrame_Vertex> listBuilder = new List<RFrame_Vertex>();
+			foreach (RFrame_Vertex vertexToCheck in verticesToCheck) {
+				if(vertexToCheck.massAtVertex > 0.0f) {
+					listBuilder.Add(vertexToCheck);
+				}
+			}
+			verticesWithMass = listBuilder.ToArray();
+		}
+
 	}
 
 }
