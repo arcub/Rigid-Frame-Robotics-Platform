@@ -16,7 +16,8 @@ namespace RigidFrame_Development
 		public Vector3 slideOffset; // The amount of the offset from this balance positions vertex to move.
 		public Vector3 noncumulativeOffset; // This is used to determine how far away the drop point is from the original anchor lock point.
 		public Vector3 biasCentreTrack; // This is where input for movement is placed. This can be considered as acceleration.
-		public GameObject biasCentreRepresentation; // An object to represent the movement centre.
+		public GameObject centreOfMassRepresentation; // An object to represent the movement centre.
+		public GameObject centreOfRetrictionAreaRep;
 		public float rotationDegreeDelta = 1.5f;
 		
 		public float crouchRange = 4.0f;
@@ -45,6 +46,10 @@ namespace RigidFrame_Development
 		public float maxStepDistance = 2.0f;
 		bool restrictedMovementAreaUpdateRequired = false;
 		
+		List<float> leanOffsets = null;
+		List<float> tiltOffsets = null;
+		List<float> crouchOffsets = null;
+
 		public enum balPolStatusEnum {
 			readyForWork,
 			adjustingBalance,
@@ -57,6 +62,16 @@ namespace RigidFrame_Development
 			// Collect all the needed stuff.
 			startUpSequence();
 			//readyForWork = true; // Does this need to be moved into the startUpSequence function?
+			if(leanOffsets==null) {
+				leanOffsets = new List<float>();
+				tiltOffsets = new List<float>();
+				crouchOffsets = new List<float>();
+				foreach(BMod_DistanceHolder distanceHolder in distanceHolders) {
+					leanOffsets.Add(0.0f);
+					tiltOffsets.Add(0.0f);
+					crouchOffsets.Add(0.0f);
+				}
+			}
 		}
 		
 		// Update is called once per frame
@@ -83,6 +98,12 @@ namespace RigidFrame_Development
 			// Control pad movement
 			float hozAxis = Input.GetAxis("Horizontal") * maxSlideMovementSpeed;
 			float verAxis = Input.GetAxis("Vertical") * maxSlideMovementSpeed;
+			float crouchAxis = Input.GetAxis("Crouch") * crouchRange;
+			// Rotation around centre point slide calculations here
+			float rotAxis = Input.GetAxis("Hoz Rotate") * rotationDegreeDelta;
+			for (int i = 0; i < crouchOffsets.Count; i++) {
+				crouchOffsets[i] = crouchAxis;
+			}
 			noncumulativeOffset.x = Input.GetAxis("Horizontal");
 			noncumulativeOffset.z = Input.GetAxis("Vertical");
 			float keyBiasOffset = 0.5f; // This goes towards how far forward the anchor point
@@ -135,37 +156,59 @@ namespace RigidFrame_Development
 
 			// ------ Balance Section -------
 			// Only apply horizontal and vertical slide axis if bal pos is ready for work
-			if(balPosWorkingStatus==balPolStatusEnum.readyForWork || balPosWorkingStatus==balPolStatusEnum.adjustingBalance) {
+			if(balPosWorkingStatus==balPolStatusEnum.readyForWork) {
 				slideOffset.x = slideOffset.x + (hozAxis * Time.deltaTime);
 				slideOffset.z = slideOffset.z + (verAxis * Time.deltaTime);
 			}
-			// Rotation around centre point slide calculations here
-			float rotAxis = Input.GetAxis("Hoz Rotate") * rotationDegreeDelta;
 			
 			// Calculate the restriction centre and compare with the actual roving centre.
 			Vector3 biasActualCentre = new Vector3();
-			foreach(Vector3 biasVector in biasMovementRestrictionArea) {
-				biasActualCentre = biasActualCentre + biasVector;
+			if(biasMovementRestrictionArea.Count>0) {
+				foreach(Vector3 biasVector in biasMovementRestrictionArea) {
+					biasActualCentre = biasActualCentre + biasVector;
+				}
+				biasActualCentre = biasActualCentre / biasMovementRestrictionArea.Count;
 			}
-			biasActualCentre = biasActualCentre / biasMovementRestrictionArea.Count;
 
 			Vector3[] centreOfMass = getCurrentCentreOfMass();
+			if(centreOfMassRepresentation!=null) {
+				centreOfMassRepresentation.transform.position = centreOfMass[0];
+			}
+			if(centreOfRetrictionAreaRep!=null) {
+				centreOfRetrictionAreaRep.transform.position = biasActualCentre;
+			}
 
-			if (Vector3.Distance(biasCentreTrack, biasActualCentre)> 0.0f) {
+			//BALANCE SLIDING SECTION
+			float offBalanceDistance = Vector3.Distance(centreOfMass[1], biasActualCentre);
+			if (offBalanceDistance > 2.5f) {
 				// If the centre if off then the robot is adjusting its balance
 				balPosWorkingStatus = balPolStatusEnum.adjustingBalance;
-				Vector3 biasMoved = Vector3.MoveTowards(biasCentreTrack, biasActualCentre, maxSlideMovementSpeed * Time.deltaTime);
-				slideOffset = slideOffset + (biasCentreTrack - biasMoved) * 1.2f; // Boost the movement
-				// Move the bias centre.
-				biasCentreTrack = biasCentreTrack - (biasCentreTrack - biasMoved);
-				if(biasCentreRepresentation!=null) {
-					biasCentreRepresentation.transform.position = biasCentreTrack;
-				}
+				Vector3 biasMoved = Vector3.MoveTowards(biasActualCentre, centreOfMass[1], maxSlideMovementSpeed * Time.deltaTime);
+				slideOffset = slideOffset + (biasMoved - biasActualCentre)*0.7f; // Add the change in movement
+
 			} else {
 				// If the balance point has been reached then declare ready for work, unless still in the start up sequence.
 				if(balPosWorkingStatus!=balPolStatusEnum.startingUp) {
 					balPosWorkingStatus = balPolStatusEnum.readyForWork;
 				}
+			}
+			// BALANCE TILTING SECTION
+			// For now, using the inverse of the direction from bias to centre for tilting	
+			Vector3 balanceLeanAxis = (centreOfMass[1] - biasActualCentre);
+			balanceLeanAxis.Normalize();
+			balanceLeanAxis = balanceLeanAxis * 1.5f;
+			for(int i = 0; i < distanceHolders.Length; i++) {
+				BMod_DistanceHolder distanceHolder = distanceHolders[i];
+				Vector3 distHold = distanceHolder.vertexPoint.transform.position;
+				Vector3 groundHolder = new Vector3(distHold.x, 0.0f, distHold.z);
+				float distToCentre = Vector3.Distance(centreOfMass[1], groundHolder);
+				float distToTracked = Vector3.Distance(centreOfMass[1]+balanceLeanAxis, groundHolder);
+				float ratioAlt = distToTracked / distToCentre;
+				float tiltOffset = 0.0f;
+				if (ratioAlt != 1.0) {
+					tiltOffset = distanceHolder.distanceToHold - (distanceHolder.distanceToHold * ratioAlt);
+				}
+				tiltOffsets[i] = tiltOffset;
 			}
 
 			// Roll through the anchor points and collect the limit reached offset vectices
@@ -220,13 +263,13 @@ namespace RigidFrame_Development
 			// }
 
 			// Adjust distance holder offsets
-			float crouchAxis = Input.GetAxis("Crouch") * crouchRange;
 			if(distanceHolders!=null) {
 				if(isLeaningSwitch) {
 					// This is to allow the rotational leaning of the robot.
 					Vector3 leanAxis = new Vector3(-Input.GetAxis("Hoz Rotate"), 0.0f, Input.GetAxis("Crouch"));
 					leanAxis = leanAxis * 1.5f; // Increase the movement range
-					foreach(BMod_DistanceHolder distanceHolder in distanceHolders) {
+					for(int i = 0; i < distanceHolders.Length; i++) {
+						BMod_DistanceHolder distanceHolder = distanceHolders[i];
 						Vector3 distHold = distanceHolder.vertexPoint.transform.position;
 						Vector3 groundHolder = new Vector3(distHold.x, 0.0f, distHold.z);
 						float distToCentre = Vector3.Distance(biasActualCentre, groundHolder);
@@ -236,13 +279,13 @@ namespace RigidFrame_Development
 						if (ratioAlt != 1.0) {
 							tiltOffset = distanceHolder.distanceToHold - (distanceHolder.distanceToHold * ratioAlt);
 						}
-						distanceHolder.distanceToHoldOffset = tiltOffset;
+						leanOffsets[i] = tiltOffset;
 					}
-				} else {
-					// Alter the height of each distance holder by the crouch axis
-					foreach(BMod_DistanceHolder distanceHolder in distanceHolders) {
-						distanceHolder.distanceToHoldOffset = crouchAxis;
-					}
+				}
+				for(int i = 0; i < distanceHolders.Length; i++) {
+					BMod_DistanceHolder distanceHolder = distanceHolders[i];
+					distanceHolder.distanceToHoldOffset = (!isLeaningSwitch ? crouchOffsets[i] : 0.0f) + 
+															tiltOffsets[i] + (isLeaningSwitch ? leanOffsets[i] : 0.0f);
 				}
 			}
 
@@ -316,6 +359,7 @@ namespace RigidFrame_Development
 						if(anchorPoint!=null) {
 							//if(anchorPoint.lockedInPosition && anchorPoint.currentAction!=BMod_AnchorPoint.AnchorCurrentActionEnum.waitingForBalance) {
 							if(anchorPoint.lockedInPosition) {
+								//anchorPoint.lockedPosition
 								collectVectors.Add(anchorPoint.anchorVertex.transform.position);
 								sumVector = sumVector + anchorPoint.anchorVertex.transform.position;
 							}
@@ -446,16 +490,13 @@ namespace RigidFrame_Development
 			if(verticesWithMass.Length > 0) {
 				Vector3 balPolCentre = controlVertex.transform.position;
 				foreach (RFrame_Vertex massVertex in verticesWithMass) {
-					vectorToReturn[0] += (massVertex.transform.position - balPolCentre) * massVertex.massAtVertex; 
+					Vector3 pos = massVertex.transform.position;
+					Vector3 posLift = new Vector3(pos.x, pos.y, pos.z);
+					vectorToReturn[0] += (posLift - balPolCentre) * massVertex.massAtVertex; 
 				}
-				vectorToReturn[0] = vectorToReturn[0] / ((float)verticesWithMass.Length);
+				vectorToReturn[0] = balPolCentre + (vectorToReturn[0] / ((float)verticesWithMass.Length));
 				// Now project the centre of mass to the floor
-				int layerMask = 1 << 8;
-				RaycastHit strikePoint;
-				// Project the attached vertex position down to the ground as a centre point.
-				if(Physics.Raycast(vectorToReturn[0], -Vector3.up, out strikePoint, 200.0f, layerMask)) {
-					vectorToReturn[1] = strikePoint.point;
-				}
+				vectorToReturn[1] = new Vector3(vectorToReturn[0].x, 0.0f, vectorToReturn[0].z);
 			}
 			return vectorToReturn;
 		}
