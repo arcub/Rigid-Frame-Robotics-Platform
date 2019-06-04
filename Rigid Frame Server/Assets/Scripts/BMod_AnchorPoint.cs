@@ -78,7 +78,7 @@ namespace RigidFrame_Development
 						// Check if slide position has moved out of bounds of the distance ellipse.
 						if (balPos.balPosWorkingStatus==BMod_BalancePosition.balPolStatusEnum.readyForWork) {
 							Vector3 fromLockedToSliding = lockedPosition - anchorVertex.transform.position;
-							Vector3 fromLastDropPoint = dropPosition - anchorVertex.transform.position;
+							//Vector3 fromLastDropPoint = dropPosition - anchorVertex.transform.position;
 							float angleFromLeft = Vector3.Angle(fromLockedToSliding, Vector3.left);
 							float distanceForAngle = disconnectDistanceForAngle(angleFromLeft);
 							// Need to take into account that last drop position will be outside the last drop point.

@@ -39,12 +39,13 @@ namespace RigidFrame_Development
 		public float intendedLength = -1;
 
 		public float actualLength = 0;
-		//int customAffirm = 1;
-		public int v1; // Array index into allVertices array in Frame_Object
-		public int v2; // Ditto for v1.
+		public int affirmLimit = -1; // Limits how many times this strut is affirmed.
+		public int v1 = -1; // Array index into allVertices array in Frame_Object
+		public int v2 = -1; // Ditto for v1.
 		//bool ignoreCollideThisStrut = false;
 		//bool locked = true;
-
+		public RFrame_Vertex v1Ref;
+		public RFrame_Vertex v2Ref;
 		// Use this for initialization
 		void Start () {
 			
@@ -54,8 +55,9 @@ namespace RigidFrame_Development
 		void Update () {
 			// Update the transform of this object so that it starts at v1 and points
 			// towards v2.
-			// Only update the struts line renderer if its enabled.
-			if(GetComponent<LineRenderer>().enabled) {
+			// Only update the struts line renderer if its enabled and v1, v2 indexes are being used.
+			// The indexes being used indicates that there are GameObjects to access.
+			if(GetComponent<LineRenderer>().enabled && v1 != -1 && v2 != -1) {
 				RFrame_Object parentFrame = transform.parent.gameObject.GetComponent<RFrame_Object>();
 				GameObject v1Obj = parentFrame.allGameObjectVertices[this.v1];
 				GameObject v2Obj = parentFrame.allGameObjectVertices[this.v2];
@@ -74,7 +76,7 @@ namespace RigidFrame_Development
 			bool minMaxxed = false;
 			float returnDifference = length - distanceToCheck;
 			
-			if (minLength > 0.0f && maxLength > 0.0f) {
+			if (minLength > 0.0f || maxLength > 0.0f) {
 				// Since there's a range that the length can be, reset
 				// the return difference back to zero so it can be moved.
 				returnDifference = 0.0f;

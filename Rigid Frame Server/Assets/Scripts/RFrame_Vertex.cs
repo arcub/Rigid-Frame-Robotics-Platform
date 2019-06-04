@@ -71,12 +71,18 @@ namespace RigidFrame_Development
 			float diffX = toVertex.x - this.x;
 			float diffY = toVertex.y - this.y;
 			float diffZ = toVertex.z - this.z;
-			float dist = Mathf.Sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
+			float preSquareRoot = diffX * diffX + diffY * diffY + diffZ * diffZ;
+			float dist = 0.0f;
+			if (preSquareRoot != 0.0f) {
+				dist = Mathf.Sqrt(preSquareRoot);
+			}
 			float[] returnVals = {dist, diffX, diffY, diffZ};
 			if (normalise) {
-				returnVals[1] = diffX / dist;
-				returnVals[2] = diffY / dist;
-				returnVals[3] = diffZ / dist;
+				if (dist!=0.0f) {
+					returnVals[1] = diffX / dist;
+					returnVals[2] = diffY / dist;
+					returnVals[3] = diffZ / dist;
+				}
 			}
 			return returnVals;
 		}

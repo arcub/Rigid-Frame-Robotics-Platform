@@ -125,43 +125,60 @@ namespace RigidFrame_Development
 						// Work through strut array and affirm strut lengths
 						foreach (RFrame_Strut strut in frameObject.allStruts) {
 							//strut = strutGameObject.GetComponent<RFrame_Strut>();
-							// Collect the vertices involved with this strut.
-							RFrame_Vertex v1 = frameObject.allVertices[strut.v1];
-							RFrame_Vertex v2 = frameObject.allVertices[strut.v2];
-							// Get the distance between the two, along with normalised
-							// axis vector pointing in the direction of the two.
-							float[] distNormV1 = v1.distanceToVertex(v2,true);
-							strut.actualLength = distNormV1[0]; // Record the current length to the strut.
-							// No need to call the method for the other way round.
-							// Just reverse the normals.
+							// Allows the controlling of how much a strut is kept to shape.
+							bool processStrut = i < strut.affirmLimit ? true : false;
+							if (strut.affirmLimit==-1) { processStrut = true;}
 
-							float limitDiff = strut.distanceOutFromAcceptableRange(distNormV1[0]);// strut.length - distNormV1[0];
-							// If the difference between the length and measured distance
-							// between the two vertices, is greater than the adjustmentThreshold
-							// variable, then adjust the vertices to the correct distance
-							// IDEA - Have a think about percentage shift bias for each vertex, depending on how many struts are connected to it.
-							//if (Mathf.Abs(limitDiff)>adjustmentThreshhold) {
+							if (processStrut) {
+								// Collect the vertices involved with this strut.
+								RFrame_Vertex v1;
+								RFrame_Vertex v2;
+								// If a reference is present then use that. It would also indicate that v1 or v2 is set to -1
+								// when a referernce is being used.
+								if (strut.v1Ref!=null) {
+									v1 = strut.v1Ref;
+								} else {
+									v1 = frameObject.allVertices[strut.v1];
+								}
+								if (strut.v2Ref!=null) {
+									v2 = strut.v2Ref;
+								} else {
+									v2 = frameObject.allVertices[strut.v2];
+								}
+								// Get the distance between the two, along with normalised
+								// axis vector pointing in the direction of the two.
+								float[] distNormV1 = v1.distanceToVertex(v2,true);
+								strut.actualLength = distNormV1[0]; // Record the current length to the strut.
+								// No need to call the method for the other way round.
+								// Just reverse the normals.
+
+								float limitDiff = strut.distanceOutFromAcceptableRange(distNormV1[0]);// strut.length - distNormV1[0];
+								// If the difference between the length and measured distance
+								// between the two vertices, is greater than the adjustmentThreshold
+								// variable, then adjust the vertices to the correct distance
+								// IDEA - Have a think about percentage shift bias for each vertex, depending on how many struts are connected to it.
+								//if (Mathf.Abs(limitDiff)>adjustmentThreshhold) {
 								// Calculate the translation for each vertex.
-							float v1xShift = -(limitDiff*affirmRatio*distNormV1[1]);
-							float v1yShift = -(limitDiff*affirmRatio*distNormV1[2]);
-							float v1zShift = -(limitDiff*affirmRatio*distNormV1[3]);
-							// This will simply be the reverse direction.
-							float v2xShift = -v1xShift;
-							float v2yShift = -v1yShift;
-							float v2zShift = -v1zShift;
-							// Applying the translations to the vertices.
-							// Only apply if not locked in place.
-							if (!v1.lockedInPlace) {
-								v1.applyTranslationV2(v1xShift, v1yShift, v1zShift, this);
-							} else {
-								v1.applyTranslationV2(0, 0, 0, this);
+								float v1xShift = -(limitDiff*affirmRatio*distNormV1[1]);
+								float v1yShift = -(limitDiff*affirmRatio*distNormV1[2]);
+								float v1zShift = -(limitDiff*affirmRatio*distNormV1[3]);
+								// This will simply be the reverse direction.
+								float v2xShift = -v1xShift;
+								float v2yShift = -v1yShift;
+								float v2zShift = -v1zShift;
+								// Applying the translations to the vertices.
+								// Only apply if not locked in place.
+								if (!v1.lockedInPlace) {
+									v1.applyTranslationV2(v1xShift, v1yShift, v1zShift, this);
+								} else {
+									v1.applyTranslationV2(0, 0, 0, this);
+								}
+								if (!v2.lockedInPlace) {
+									v2.applyTranslationV2(v2xShift, v2yShift, v2zShift, this);
+								} else {
+									v2.applyTranslationV2(0, 0, 0, this);
+								}
 							}
-							if (!v2.lockedInPlace) {
-								v2.applyTranslationV2(v2xShift, v2yShift, v2zShift, this);
-							} else {
-								v2.applyTranslationV2(0, 0, 0, this);
-							}
-							//}
 						}
 					}
 				}

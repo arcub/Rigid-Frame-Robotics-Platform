@@ -3265,6 +3265,11 @@ Prefab:
       value: 
       objectReference: {fileID: 1317873239921798, guid: e2335c768fe6648bfb56163ac6c4146e,
         type: 2}
+    - target: {fileID: 114407167492826734, guid: 45e50f00610784711892797a24a7888d,
+        type: 2}
+      propertyPath: doubleVertexRoamDistance
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 45e50f00610784711892797a24a7888d, type: 2}
   m_IsPrefabParent: 0
@@ -3514,8 +3519,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19d5339e74610498683317d2b52f7cd5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  allGameObjectVertices: []
+  allGameObjectStruts: []
   allVertices: []
-  struts: []
+  allStruts: []
   angleLinks: []
   compReps: []
   objFileToBuildFrom: {fileID: 4900000, guid: 4c171fff6356a4f65ae148fafbc7c497, type: 3}
@@ -3533,6 +3540,7 @@ MonoBehaviour:
     type: 2}
   AnchorPointInstantiator: {fileID: 1029264303816652, guid: 6ae519e9dc21b4deb9b05b7896821fc3,
     type: 2}
+  doubleVertexRoamDistance: 0
 --- !u!4 &1635907395
 Transform:
   m_ObjectHideFlags: 0
@@ -3594,7 +3602,7 @@ MonoBehaviour:
   LinkName: TestLink
   affirmCycles: 200
   displayFrameOnLoad: 1
-  displayComponentRepsOnLoad: 1
+  displayComponentRepsOnLoad: 0
   textBoxForCyclesUpdate: {fileID: 1729920676}
   inputFieldForNumCycles: {fileID: 261605335}
   maxSpeedOnBalPols: {fileID: 1106132993}

@@ -52,14 +52,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2255bbb6d0244ca1947352eb3af742b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  strutType: 0
   minLength: -1
   maxLength: -1
   length: 1
   intendedLength: -1
   actualLength: 0
-  v1: 0
-  v2: 0
+  affirmLimit: -1
+  v1: -1
+  v2: -1
+  v1Ref: {fileID: 0}
+  v2Ref: {fileID: 0}
 --- !u!120 &120118285934679440
 LineRenderer:
   m_ObjectHideFlags: 1

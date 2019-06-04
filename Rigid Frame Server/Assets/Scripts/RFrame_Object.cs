@@ -12,7 +12,7 @@ namespace RigidFrame_Development
 	public class RFrame_Object : MonoBehaviour {
 
 		string frameName;
-		float shortestStrutLength = -1f;
+		//float shortestStrutLength = -1f;
 		
 		public List<GameObject> allGameObjectVertices; // Array of all Fvertex objects. Each Fvertex object has an array of Fstruts
 		public List<GameObject> allGameObjectStruts; // Array of GameObject Fstrut objects.
@@ -30,6 +30,8 @@ namespace RigidFrame_Development
 		public GameObject BalancePositionInstantiator;
 		public GameObject DistanceHolderInstantiator;
 		public GameObject AnchorPointInstantiator;
+
+		public float doubleVertexRoamDistance = 1.0f;
 
 		// Use this for initialization. If a OBJ file has been attached then call
 		// the build function to turn it into a working frame.
@@ -162,6 +164,7 @@ namespace RigidFrame_Development
 						}
 					}
 					angleViewBuild.Add(angleViewerObj);
+
 				} else if (objLine.StartsWith("comprep") && transform.GetComponentInParent<RFrame_Bridge>().displayComponentRepsOnLoad) {
 					// Component representation
 					string[] splits = objLine.Split(' ');
@@ -183,6 +186,7 @@ namespace RigidFrame_Development
 					GameObject meshObject = Instantiate(Resources.Load<GameObject>(meshName), compRepObj.transform);
 					meshObject.transform.localPosition = new Vector3(xTran,yTran,zTran);
 					meshObject.transform.localRotation = Quaternion.Euler(xRot, yRot, zRot);
+
 				} else if (objLine.StartsWith("balpos")) {
 					// Balance position behaviour module building here
 					string[] splits = objLine.Split(' ');
@@ -191,8 +195,29 @@ namespace RigidFrame_Development
 					GameObject balPolObj = Instantiate(BalancePositionInstantiator, this.transform);
 					BMod_BalancePosition balPosMod = balPolObj.GetComponent<BMod_BalancePosition>();
 					balPosMod.restrictionAreaShrinkRatio = reduceRatio;
-					balPosMod.controlVertex = verticesGameObjectBuild[vertexAttachIndex].GetComponent<RFrame_Vertex>();
-					//balPosMod.controlVertex.lockedInPlace = true;
+					// Duplicate the position of the indexed vertex and create a strut inbetween.
+					// The duplicated vertex is referenced by this Balance positioner only
+					RFrame_Vertex attachToVertex = verticesBuild[vertexAttachIndex];
+					GameObject vertexInstantObject = Instantiate(VertexInstantiator, this.transform); // Because Unity.
+					RFrame_Vertex dupliVertex = vertexInstantObject.GetComponent<RFrame_Vertex>();
+					dupliVertex.x = attachToVertex.x;
+					dupliVertex.y = attachToVertex.y;
+					dupliVertex.z = attachToVertex.z;
+					dupliVertex.name = attachToVertex.name + "_Duplicate";
+					vertexInstantObject.transform.localPosition = new Vector3(dupliVertex.x, dupliVertex.y, dupliVertex.z);
+					dupliVertex.lockedInPlace = true; // The duplicated vertex is not allowed to roam
+					GameObject strutInstantObject = Instantiate(StrutInstantiator, this.transform); // Because Unity.
+					RFrame_Strut roamingStrut = strutInstantObject.GetComponent<RFrame_Strut>();
+					roamingStrut.v1 = -1;
+					roamingStrut.v2 = -1;
+					roamingStrut.v1Ref = attachToVertex;
+					roamingStrut.v2Ref = dupliVertex;
+					roamingStrut.intendedLength = doubleVertexRoamDistance;
+					roamingStrut.affirmLimit = 10; // This should allow a bit of roaming but eventually return to spot.
+					strutsBuild.Add(roamingStrut);
+					strutGameObjectBuild.Add(strutInstantObject);
+					// Set the duplicated vertex to be moved by the balance positioner
+					balPosMod.controlVertex = dupliVertex;
 					balPosBuild.Add(balPolObj);
 				} else if (objLine.StartsWith("dishol")) {
 					// Distance holder behaviour module building here
@@ -203,10 +228,28 @@ namespace RigidFrame_Development
 					int typeOfDisHol = int.Parse(splits[4]);
 					GameObject disHolObj = Instantiate(DistanceHolderInstantiator, balPosBuild[balPosIndex].transform);
 					BMod_DistanceHolder disHolMod = disHolObj.GetComponent<BMod_DistanceHolder>();
-					disHolMod.vertexPoint = verticesGameObjectBuild[vertexAttachIndex].GetComponent<RFrame_Vertex>();
-					// Experimenting with not locking the vertex in place.
-					// Need to make sure frame doesn't move out of place.
-					disHolMod.vertexPoint.lockedInPlace = true;
+
+					// Add the duplicate vertex
+					RFrame_Vertex attachToVertex = verticesBuild[vertexAttachIndex];
+					GameObject vertexInstantObject = Instantiate(VertexInstantiator, this.transform); // Because Unity.
+					RFrame_Vertex dupliVertex = vertexInstantObject.GetComponent<RFrame_Vertex>();
+					dupliVertex.x = attachToVertex.x;
+					dupliVertex.y = attachToVertex.y;
+					dupliVertex.z = attachToVertex.z;
+					vertexInstantObject.transform.localPosition = new Vector3(dupliVertex.x, dupliVertex.y, dupliVertex.z);
+					dupliVertex.lockedInPlace = true; // The duplicated vertex is not allowed to roam
+					GameObject strutInstant = Instantiate(StrutInstantiator, this.transform); // Because Unity.
+					RFrame_Strut roamingStrut = strutInstant.GetComponent<RFrame_Strut>();
+					roamingStrut.v1 = -1;
+					roamingStrut.v2 = -1;
+					roamingStrut.v1Ref = attachToVertex;
+					roamingStrut.v2Ref = dupliVertex;
+					roamingStrut.intendedLength = doubleVertexRoamDistance;
+					roamingStrut.affirmLimit = 10; // This should allow a bit of roaming but eventually return to spot.
+					strutsBuild.Add(roamingStrut);
+					strutGameObjectBuild.Add(strutInstant);
+
+					disHolMod.vertexPoint = dupliVertex;
 					disHolMod.distanceToHold = distanceToHold;
 					switch (typeOfDisHol) {
 						case 0: disHolMod.moduleType = BMod_DistanceHolder.DistanceModuleType.groundDistance; break;
@@ -223,7 +266,28 @@ namespace RigidFrame_Development
 					int typeOfAnchor = int.Parse(splits[4]);
 					GameObject anchorObj = Instantiate(AnchorPointInstantiator, disHolBuild[disHolIndex].transform);
 					BMod_AnchorPoint anchorMod = anchorObj.GetComponent<BMod_AnchorPoint>();
-					anchorMod.anchorVertex = verticesGameObjectBuild[vertexAttachIndex].GetComponent<RFrame_Vertex>();
+
+					// Add the duplicate vertex
+					RFrame_Vertex attachToVertex = verticesBuild[vertexAttachIndex];
+					GameObject vertexInstantObject = Instantiate(VertexInstantiator, this.transform); // Because Unity.
+					RFrame_Vertex dupliVertex = vertexInstantObject.GetComponent<RFrame_Vertex>();
+					dupliVertex.x = attachToVertex.x;
+					dupliVertex.y = attachToVertex.y;
+					dupliVertex.z = attachToVertex.z;
+					vertexInstantObject.transform.localPosition = new Vector3(dupliVertex.x, dupliVertex.y, dupliVertex.z);
+					dupliVertex.lockedInPlace = true; // The duplicated vertex is not allowed to roam
+					GameObject strutInstant = Instantiate(StrutInstantiator, this.transform); // Because Unity.
+					RFrame_Strut roamingStrut = strutInstant.GetComponent<RFrame_Strut>();
+					roamingStrut.v1 = -1;
+					roamingStrut.v2 = -1;
+					roamingStrut.v1Ref = attachToVertex;
+					roamingStrut.v2Ref = dupliVertex;
+					roamingStrut.intendedLength = doubleVertexRoamDistance;
+					roamingStrut.affirmLimit = -1; // This should allow a bit of roaming but eventually return to spot.
+					strutsBuild.Add(roamingStrut);
+					strutGameObjectBuild.Add(strutInstant);
+
+					anchorMod.anchorVertex = dupliVertex;
 					anchorMod.anchorVertex.lockedInPlace = true;
 					anchorMod.priorityIndex = priorityValue;
 					switch (typeOfAnchor) {
@@ -264,56 +328,63 @@ namespace RigidFrame_Development
 		
 		static GameObject createStrutIfNotExisting(RFrame_Object frameObject, GameObject strutInstantiator, List<GameObject> strutsCheck, List<RFrame_Strut> strutsRaw, int v1, int v2) {
 			RFrame_Strut strutToCheck;
-			bool foundExistingStrut = false;
-			//if (strutsCheck.Count==0) return false;
 			foreach(GameObject strutToCheckGameObject in strutsCheck) {
 				strutToCheck = strutToCheckGameObject.GetComponent<RFrame_Strut>();
 				if(strutToCheck.v1==v1 && strutToCheck.v2==v2) {
-					foundExistingStrut = true;
+					return strutToCheckGameObject;
 				}
 				if(strutToCheck.v1==v2 && strutToCheck.v2==v1) {
-					foundExistingStrut = true;
+					return strutToCheckGameObject;
 				}
 			}
-			if (!foundExistingStrut) {
-				GameObject strutGameObject = Instantiate(strutInstantiator, frameObject.transform);
-				RFrame_Strut newStrut = strutGameObject.GetComponent<RFrame_Strut>();
-				newStrut.v1 = v1;
-				newStrut.v2 = v2;
-				strutsCheck.Add(strutGameObject);
-				strutsRaw.Add(newStrut);
-				return strutGameObject;
-			}
-			return null;//foundExistingStrut;
+			// Create a new strut if this section is reached. Since an existing strut would have been returned.
+			GameObject strutGameObject = Instantiate(strutInstantiator, frameObject.transform);
+			RFrame_Strut newStrut = strutGameObject.GetComponent<RFrame_Strut>();
+			newStrut.v1 = v1;
+			newStrut.v2 = v2;
+			strutsCheck.Add(strutGameObject);
+			strutsRaw.Add(newStrut);
+			return strutGameObject;
 		}
 		
-		void checkIfShortestStrut(RFrame_Strut strut) {
-			if (shortestStrutLength==-1f || strut.length < shortestStrutLength) {
-				shortestStrutLength = strut.length;
-			}
-		}
+		// void checkIfShortestStrut(RFrame_Strut strut) {
+		// 	if (shortestStrutLength==-1f || strut.length < shortestStrutLength) {
+		// 		shortestStrutLength = strut.length;
+		// 	}
+		// }
 		
 		public void calculateDistancesThenOrientate() {
-			RFrame_Strut strutPull;
-			foreach (GameObject strutObject in allGameObjectStruts) {
-				strutPull = strutObject.GetComponent<RFrame_Strut>();
-				GameObject v1Obj = allGameObjectVertices[strutPull.v1];
-				GameObject v2Obj = allGameObjectVertices[strutPull.v2];
-				RFrame_Vertex v1 = v1Obj.GetComponent<RFrame_Vertex>();
-				RFrame_Vertex v2 = v2Obj.GetComponent<RFrame_Vertex>();
-				strutPull.length = Mathf.Abs(v1.distanceToVertex(v2, false)[0]);
-				checkIfShortestStrut(strutPull);
-
-				// Update the line renderers.
-				Vector3[] positions = {v1Obj.transform.localPosition,v2Obj.transform.localPosition};
-				strutPull.updateLineRenderPositions(positions);
-
+			RFrame_Vertex v1;
+			RFrame_Vertex v2;
+			foreach (RFrame_Strut strutCalc in allStruts) {
+				if (strutCalc.v1 != -1 && strutCalc.v2 != -1) {
+					GameObject v1Obj = allGameObjectVertices[strutCalc.v1];
+					GameObject v2Obj = allGameObjectVertices[strutCalc.v2];
+					v1 = allVertices[strutCalc.v1];
+					v2 = allVertices[strutCalc.v2];
+					// Update the line renderers.
+					Vector3[] positions = {v1Obj.transform.localPosition,v2Obj.transform.localPosition};
+					strutCalc.updateLineRenderPositions(positions);
+				} else {
+					if (strutCalc.v1!=-1) {
+						v1 = allVertices[strutCalc.v1];
+					} else {
+						v1 = strutCalc.v1Ref;
+					}
+					if (strutCalc.v2!=-1) {
+						v2 = allVertices[strutCalc.v2];
+					} else {
+						v2 = strutCalc.v2Ref;
+					}	
+				}
+				strutCalc.length = Mathf.Abs(v1.distanceToVertex(v2, false)[0]);
+				//checkIfShortestStrut(strutCalc);
 			}
 		}
 		
-		public float GetShortestStrutLength() {
-			return shortestStrutLength;
-		}
+		// public float GetShortestStrutLength() {
+		// 	return shortestStrutLength;
+		// }
 
 	}
 
