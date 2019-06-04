@@ -183,7 +183,11 @@ namespace RigidFrame_Development
 							float zVal = currentPosition.x * Mathf.Sin(angleRad) + currentPosition.z * Mathf.Cos(angleRad);
 							rotationOffset = (new Vector3(xVal,yVal,zVal)) - currentPosition;
 						}
-						anchorPoint.anchorVertex.offset += (slideOffset - previousSlideOffset) + rotationOffset; // Apply the change in offset
+						// Apply the changes as an offset
+						anchorPoint.anchorVertex.x += (slideOffset.x - previousSlideOffset.x) + rotationOffset.x;
+						anchorPoint.anchorVertex.y += (slideOffset.y - previousSlideOffset.y) + rotationOffset.y;
+						anchorPoint.anchorVertex.z += (slideOffset.z - previousSlideOffset.z) + rotationOffset.z;
+						//anchorPoint.anchorVertex.offset += (slideOffset - previousSlideOffset) + rotationOffset; // Apply the change in offset
 					}
 				}
 				previousSlideOffset = slideOffset;

@@ -10,16 +10,16 @@ namespace RigidFrame_Development
 		float _y;
 		float _z;
 		public float x {
-			get { return _x + offset.x;}
-			set { _x = value - offset.x;}
+			get { return _x;}
+			set { _x = value;}
 		}
 		public float y {
-			get { return _y + offset.y; }
-			set { _y = value - offset.y;}
+			get { return _y; }
+			set { _y = value;}
 		}
 		public float z {
-			get { return _z + offset.z;}
-			set { _z = value - offset.z;}
+			get { return _z;}
+			set { _z = value;}
 		}
 		float effectorCount = 0;
 		float xWork;
@@ -29,7 +29,7 @@ namespace RigidFrame_Development
 		public bool lockedInPlace = false;
 		public VertexType vertexType;
 
-		public Vector3 offset;
+		//public Vector3 offset;
 
 			// Use this for initialization
 		RFrame_Bridge simulator;
@@ -38,26 +38,26 @@ namespace RigidFrame_Development
 		}
 		
 		// Update is called once per frame
-		void Update () {
-			// This will be where any interaction or physics based influences will occur.
-			if (!lockedInPlace && simulator.fakeGravityToggle) {
-				Vector3 gravityInfluence = Physics.gravity * 0.3f *Time.deltaTime;
-				Vector3 updatedPosition = new Vector3(x,y,z) + gravityInfluence;
+		// void Update () {
+		// 	// This will be where any interaction or physics based influences will occur.
+		// 	if (!lockedInPlace && simulator.fakeGravityToggle) {
+		// 		Vector3 gravityInfluence = Physics.gravity * 0.3f *Time.deltaTime;
+		// 		Vector3 updatedPosition = new Vector3(x,y,z) + gravityInfluence;
 
-				// This was for the an imaginary floor
-				if (updatedPosition.y < 0) {
-					updatedPosition.y = 0;
-				}
+		// 		// This was for the an imaginary floor
+		// 		if (updatedPosition.y < 0) {
+		// 			updatedPosition.y = 0;
+		// 		}
 
-				Transform tr = GetComponent<Transform>();
-				tr.localPosition = updatedPosition;
+		// 		Transform tr = GetComponent<Transform>();
+		// 		tr.localPosition = updatedPosition;
 
-				//Experimenting. Updating this vertex data with tranforms position.
-				x = updatedPosition.x;
-				y = updatedPosition.y;
-				z = updatedPosition.z;
-			}
-		}
+		// 		//Experimenting. Updating this vertex data with tranforms position.
+		// 		x = updatedPosition.x;
+		// 		y = updatedPosition.y;
+		// 		z = updatedPosition.z;
+		// 	}
+		// }
 		
 
 		/**

@@ -45,7 +45,10 @@ namespace RigidFrame_Development
 							Vector3 current = vertexPoint.transform.position;
 							Vector3 shouldBe = new Vector3(current.x, distanceRequired, current.z);
 							Vector3 moveTo = Vector3.MoveTowards(current, shouldBe, balPos.maxSlideMovementSpeed * Time.deltaTime);
-							vertexPoint.offset+= (moveTo-current); // Only apply translation.
+							// Apply the translation only to the vertex
+							vertexPoint.x += (moveTo.x - current.x);
+							vertexPoint.y += (moveTo.y - current.y);
+							vertexPoint.z += (moveTo.z - current.z);
 						}
 					}
 				}
