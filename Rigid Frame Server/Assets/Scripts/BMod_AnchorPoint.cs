@@ -65,47 +65,22 @@ namespace RigidFrame_Development
 		}
 		
 		// Update is called once per frame
-		void Update () {
-			checkPositionStatus();
-		}
+		// void Update () {
+		// 	checkPositionStatus();
+		// }
 
-		void checkPositionStatus() {
+		public void checkPositionStatus(BMod_BalancePosition balPos) {
+			// Locate the balance positioner
+			if (balPos!=null) {
 			// Method for checking where this anchor point is in relation to where it should be.
-			switch(currentAction) {
-				case AnchorCurrentActionEnum.idle: {
-					// Check if slide position has moved out of bounds of the distance ellipse.
-					BMod_BalancePosition balPos = transform.parent.parent.GetComponent<BMod_BalancePosition>(); // Hit and hope
-					if (balPos!=null) {
+				switch(currentAction) {
+					case AnchorCurrentActionEnum.idle: {
+						// Check if slide position has moved out of bounds of the distance ellipse.
 						if (balPos.balPosWorkingStatus==BMod_BalancePosition.balPolStatusEnum.readyForWork) {
 							Vector3 fromLockedToSliding = lockedPosition - anchorVertex.transform.position;
 							Vector3 fromLastDropPoint = dropPosition - anchorVertex.transform.position;
 							float angleFromLeft = Vector3.Angle(fromLockedToSliding, Vector3.left);
 							float distanceForAngle = disconnectDistanceForAngle(angleFromLeft);
-
-							// Apply ground pushing bias based on distance from locked to current
-							// float limitDist = limitDistanceForAngle(angleFromLeft);
-							// float ratioToLimit = 0.0f;
-							// if (fromLockedToSliding.magnitude==0.0f) {
-							// 	ratioToLimit = 1.0f;
-							// } else {
-							// 	ratioToLimit = 1.0f - (fromLockedToSliding.magnitude / limitDist);
-							// 	//Debug.Log(limitDist + " Limit distance, " + fromLockedToSliding.magnitude + " Mag, Limit distance ratio " + ratioToLimit);
-							// }
-							// if (fromLockedToSliding.magnitude > limitDist) {
-							// 	ratioToLimit = 0.0f;
-							// }
-							// float groundPush = pushDownDistance * balPos.noncumulativeOffset.magnitude * ratioToLimit;
-							// Vector3 newPos = new Vector3(anchorVertex.transform.position.x, -groundPush, anchorVertex.transform.position.z);
-							// anchorVertex.transform.position = newPos;
-							// //anchorVertex.x = anchorVertex.transform.localPosition.x;
-							// anchorVertex.y = anchorVertex.transform.localPosition.y;
-							//anchorVertex.z = anchorVertex.transform.localPosition.z;
-
-							//Debug.Log("Anchor " + priorityIndex + " angle " + angleFromLeft + " distance " + distanceForAngle);
-							//float xDebug = lockedPosition.x + 2.0f * Mathf.Cos(angleFromLeft*Mathf.Deg2Rad);
-							//float yDebug = lockedPosition.y + 0.3f;
-							//float zDebug = lockedPosition.z + 2.0f * Mathf.Sin(angleFromLeft * Mathf.Deg2Rad);
-							// Debug.DrawLine(lockedPosition, new Vector3(xDebug, yDebug, zDebug));
 							// Need to take into account that last drop position will be outside the last drop point.
 							// This codes needs to be more robust.
 							// MAYBE have unlock area change to encompass drop point.
@@ -132,34 +107,26 @@ namespace RigidFrame_Development
 								}
 							}
 						}
+						break;
 					}
-					break;
-				}
-				case AnchorCurrentActionEnum.movingToStartingLockPosition: {
-					// 1 - Collect bias acceleration and apply to movement of vertex
-					// 2 - Check if destination reached
-					BMod_BalancePosition balPos = transform.parent.parent.GetComponent<BMod_BalancePosition>(); // Hit and hope
-					if (balPos!=null) {
-						//if (balPos.readyForWork) {
-							Vector3 newPos = Vector3.MoveTowards(anchorVertex.transform.position, lockedPosition, balPos.maxSlideMovementSpeed*Time.deltaTime);
-							anchorVertex.transform.position = newPos;
-							anchorVertex.x = anchorVertex.transform.localPosition.x;
-							anchorVertex.y = anchorVertex.transform.localPosition.y;
-							anchorVertex.z = anchorVertex.transform.localPosition.z;
-							// Check if destination has been reached
-							if (Vector3.Distance(newPos, lockedPosition)==0.0f) {
-								lockedInPosition = true;
-								currentAction = AnchorCurrentActionEnum.idle;
-							}
-						//}
+					case AnchorCurrentActionEnum.movingToStartingLockPosition: {
+						// 1 - Collect bias acceleration and apply to movement of vertex
+						// 2 - Check if destination reached
+						Vector3 newPos = Vector3.MoveTowards(anchorVertex.transform.position, lockedPosition, balPos.maxSlideMovementSpeed*Time.deltaTime);
+						anchorVertex.transform.position = newPos;
+						anchorVertex.x = anchorVertex.transform.localPosition.x;
+						anchorVertex.y = anchorVertex.transform.localPosition.y;
+						anchorVertex.z = anchorVertex.transform.localPosition.z;
+						// Check if destination has been reached
+						if (Vector3.Distance(newPos, lockedPosition)==0.0f) {
+							lockedInPosition = true;
+							currentAction = AnchorCurrentActionEnum.idle;
+						}
+						break;
 					}
-					break;
-				}
-				case AnchorCurrentActionEnum.movingToUnlockPosition: {
-					// Collect bias acceleration and apply to movement of vertex
-					// Check if destination reached
-					BMod_BalancePosition balPos = transform.parent.parent.GetComponent<BMod_BalancePosition>(); // Hit and hope
-					if (balPos!=null) {
+					case AnchorCurrentActionEnum.movingToUnlockPosition: {
+						// Collect bias acceleration and apply to movement of vertex
+						// Check if destination reached
 						if (balPos.balPosWorkingStatus==BMod_BalancePosition.balPolStatusEnum.readyForWork) {
 							Vector3 newPos = Vector3.MoveTowards(anchorVertex.transform.position, unlockedPosition, balPos.maxSlideMovementSpeed*Time.deltaTime);
 							anchorVertex.transform.position = newPos;
@@ -172,15 +139,12 @@ namespace RigidFrame_Development
 								currentAction = AnchorCurrentActionEnum.movingToDesinationPosition;
 							}
 						}
+						break;
 					}
-					break;
-				}
-				case AnchorCurrentActionEnum.movingToDesinationPosition: {
-					// Collect bias acceleration and apply to movement of vertex
-					// Check if destination reached
-					// The drop position is dynamic and linked to the direction of the main offset & rotation of the balance positioner
-					BMod_BalancePosition balPos = transform.parent.parent.GetComponent<BMod_BalancePosition>(); // Hit and hope
-					if (balPos!=null) {
+					case AnchorCurrentActionEnum.movingToDesinationPosition: {
+						// Collect bias acceleration and apply to movement of vertex
+						// Check if destination reached
+						// The drop position is dynamic and linked to the direction of the main offset & rotation of the balance positioner
 						if (balPos.balPosWorkingStatus==BMod_BalancePosition.balPolStatusEnum.readyForWork) {
 							// Update the drop position based on the offset direction of the balance positioner and
 							// magnitude of non-cumulative offset. It is still slid around by the overall offset
@@ -234,21 +198,19 @@ namespace RigidFrame_Development
 								lockedInPosition = true;
 								completedLockingSignal = true;
 							}
+							
 						}
+						break;
 					}
-					break;
-				}
-				case AnchorCurrentActionEnum.waitingForBalance: {
-					// This is for a leg has been given approval for lifting, but is waiting for balance to be reached.
-					BMod_BalancePosition balPos = transform.parent.parent.GetComponent<BMod_BalancePosition>(); // Hit and hope
-					if (balPos!=null) {
+					case AnchorCurrentActionEnum.waitingForBalance: {
+						// This is for a leg has been given approval for lifting, but is waiting for balance to be reached.
 						// If the balance hsa been reached then this anchor can be unlocked to move to unlock position.
 						if (balPos.balPosWorkingStatus==BMod_BalancePosition.balPolStatusEnum.readyForWork) {
 							lockedInPosition = false;
 							currentAction = AnchorCurrentActionEnum.movingToUnlockPosition;
 						}
+						break;
 					}
-					break;
 				}
 			}
 		}

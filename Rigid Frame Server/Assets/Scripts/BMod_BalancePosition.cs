@@ -64,6 +64,16 @@ namespace RigidFrame_Development
 			// system, where the body is tilted and shifted as needed.
 			// Process each of the distance holder and anchor points attached to this
 			// class.
+
+			// Roll through each anchor point and get it to process it's situation
+			// This migrates the updating of the anchor points to within this section,
+			// Rather than relying on Unity to call each anchor points update in the
+			// right order.
+			foreach (BMod_AnchorPoint anchorPoint in anchorPoints) {
+				anchorPoint.checkPositionStatus(this);
+			}
+
+			// Check if the restricted movement area needs updating
 			if(restrictedMovementAreaUpdateRequired) {
 				updateRestrictionRegion(false);
 				restrictedMovementAreaUpdateRequired = false;
