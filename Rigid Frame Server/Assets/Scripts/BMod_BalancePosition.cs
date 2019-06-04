@@ -75,10 +75,10 @@ namespace RigidFrame_Development
 			}
 
 			// Check if the restricted movement area needs updating
-			if(restrictedMovementAreaUpdateRequired) {
+			//if(restrictedMovementAreaUpdateRequired) {
 				updateRestrictionRegion(false);
 				restrictedMovementAreaUpdateRequired = false;
-			}
+			//}
 
 			// Control pad movement
 			float hozAxis = Input.GetAxis("Horizontal") * maxSlideMovementSpeed;
@@ -133,9 +133,9 @@ namespace RigidFrame_Development
 			}
 
 
-			//Debug.Log("Hoz " + hozAxis + ", Ver " + verAxis);
+			// ------ Balance Section -------
 			// Only apply horizontal and vertical slide axis if bal pos is ready for work
-			if(balPosWorkingStatus==balPolStatusEnum.readyForWork) {
+			if(balPosWorkingStatus==balPolStatusEnum.readyForWork || balPosWorkingStatus==balPolStatusEnum.adjustingBalance) {
 				slideOffset.x = slideOffset.x + (hozAxis * Time.deltaTime);
 				slideOffset.z = slideOffset.z + (verAxis * Time.deltaTime);
 			}
@@ -148,6 +148,9 @@ namespace RigidFrame_Development
 				biasActualCentre = biasActualCentre + biasVector;
 			}
 			biasActualCentre = biasActualCentre / biasMovementRestrictionArea.Count;
+
+			Vector3[] centreOfMass = getCurrentCentreOfMass();
+
 			if (Vector3.Distance(biasCentreTrack, biasActualCentre)> 0.0f) {
 				// If the centre if off then the robot is adjusting its balance
 				balPosWorkingStatus = balPolStatusEnum.adjustingBalance;
@@ -311,13 +314,13 @@ namespace RigidFrame_Development
 						// Use anchor point if locked.
 						BMod_AnchorPoint anchorPoint = distanceHolder.transform.GetComponentInChildren<BMod_AnchorPoint>();
 						if(anchorPoint!=null) {
-							if(anchorPoint.lockedInPosition && anchorPoint.currentAction!=BMod_AnchorPoint.AnchorCurrentActionEnum.waitingForBalance) {
-								collectVectors.Add(anchorPoint.lockedPosition);
-								sumVector = sumVector + anchorPoint.lockedPosition;
+							//if(anchorPoint.lockedInPosition && anchorPoint.currentAction!=BMod_AnchorPoint.AnchorCurrentActionEnum.waitingForBalance) {
+							if(anchorPoint.lockedInPosition) {
+								collectVectors.Add(anchorPoint.anchorVertex.transform.position);
+								sumVector = sumVector + anchorPoint.anchorVertex.transform.position;
 							}
 						}
 					}
-					
 				}
 				// Form restriction region from collected ground positions.
 				// Should an actual 3D object be created that's really tall?
@@ -436,6 +439,25 @@ namespace RigidFrame_Development
 					}
 				}
 			}
+		}
+
+		public Vector3[] getCurrentCentreOfMass() {
+			Vector3[] vectorToReturn = {new Vector3(), new Vector3()};
+			if(verticesWithMass.Length > 0) {
+				Vector3 balPolCentre = controlVertex.transform.position;
+				foreach (RFrame_Vertex massVertex in verticesWithMass) {
+					vectorToReturn[0] += (massVertex.transform.position - balPolCentre) * massVertex.massAtVertex; 
+				}
+				vectorToReturn[0] = vectorToReturn[0] / ((float)verticesWithMass.Length);
+				// Now project the centre of mass to the floor
+				int layerMask = 1 << 8;
+				RaycastHit strikePoint;
+				// Project the attached vertex position down to the ground as a centre point.
+				if(Physics.Raycast(vectorToReturn[0], -Vector3.up, out strikePoint, 200.0f, layerMask)) {
+					vectorToReturn[1] = strikePoint.point;
+				}
+			}
+			return vectorToReturn;
 		}
 
 		public void buildListOfVerticesWithMass(List<RFrame_Vertex> verticesToCheck) {
