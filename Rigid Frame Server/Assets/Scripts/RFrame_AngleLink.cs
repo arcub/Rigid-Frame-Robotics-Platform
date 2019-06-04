@@ -59,26 +59,30 @@ namespace RigidFrame_Development
 
 		public void measureAngle(bool measuringInitialAngle = false) {
 			RFrame_Object parentFrame = transform.parent.gameObject.GetComponent<RFrame_Object>();
-			GameObject centerObj = parentFrame.allGameObjectVertices[this.centerVertex];
-			GameObject upObj = parentFrame.allGameObjectVertices[this.upVertex];
-			GameObject measure1Obj = parentFrame.allGameObjectVertices[this.measure1];
-			GameObject measure2Obj = parentFrame.allGameObjectVertices[this.measure2];
-			Vector3 measure1Vertex = measure1Obj.transform.localPosition - centerObj.transform.localPosition;
-			Vector3 measure2Vertex = measure2Obj.transform.localPosition - centerObj.transform.localPosition;
+			RFrame_Vertex vertexCentre = parentFrame.allVertices[this.centerVertex];
+			RFrame_Vertex vertexUp = parentFrame.allVertices[this.upVertex];
+			RFrame_Vertex vertexMeasure1 = parentFrame.allVertices[this.measure1];
+			RFrame_Vertex vertexMeasure2 = parentFrame.allVertices[this.measure2];
+			Vector3 centreVector = new Vector3(vertexCentre.x, vertexCentre.y, vertexCentre.z);
+			Vector3 upVector = new Vector3(vertexUp.x, vertexUp.y, vertexUp.z);
+			Vector3 measure1Vector = new Vector3(vertexMeasure1.x, vertexMeasure1.y, vertexMeasure1.z);
+			Vector3 measure2Vector = new Vector3(vertexMeasure2.x, vertexMeasure2.y, vertexMeasure2.z);
+			Vector3 measure1Calc = measure1Vector - centreVector;
+			Vector3 measure2Calc = measure2Vector - centreVector;
 			
 			// Measure the angle based on the measuring angle type.
 			switch (angleMeasureType) {
 				case AngleMeasureTypeEnum.quaternionBased: {
-					Vector3 upVertex = upObj.transform.localPosition - centerObj.transform.localPosition;
-					Quaternion orientation1 = Quaternion.LookRotation(measure1Vertex, upVertex);
-					Quaternion orientation2 = Quaternion.LookRotation(measure2Vertex, upVertex);
+					Vector3 upVertex = upVector - centreVector;
+					Quaternion orientation1 = Quaternion.LookRotation(measure1Calc, upVertex);
+					Quaternion orientation2 = Quaternion.LookRotation(measure2Calc, upVertex);
 					angleBetween = Quaternion.Angle(orientation1, orientation2);
 					break;
 				}
 				case AngleMeasureTypeEnum.lineBased: {
 					// Use the dot product method of finding the angle
-					float dotProduct = Vector3.Dot(measure1Vertex, measure2Vertex);
-					float magMult = measure1Vertex.magnitude * measure2Vertex.magnitude;
+					float dotProduct = Vector3.Dot(measure1Calc, measure2Calc);
+					float magMult = measure1Calc.magnitude * measure2Calc.magnitude;
 					if(magMult>0.0f) {
 						// Converted to degrees.
 						angleBetween = Mathf.Acos(dotProduct / magMult) * Mathf.Rad2Deg;
