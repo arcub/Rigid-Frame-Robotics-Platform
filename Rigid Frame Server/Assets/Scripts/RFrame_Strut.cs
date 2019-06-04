@@ -57,8 +57,8 @@ namespace RigidFrame_Development
 			// Only update the struts line renderer if its enabled.
 			if(GetComponent<LineRenderer>().enabled) {
 				RFrame_Object parentFrame = transform.parent.gameObject.GetComponent<RFrame_Object>();
-				GameObject v1Obj = parentFrame.allVertices[this.v1];
-				GameObject v2Obj = parentFrame.allVertices[this.v2];
+				GameObject v1Obj = parentFrame.allGameObjectVertices[this.v1];
+				GameObject v2Obj = parentFrame.allGameObjectVertices[this.v2];
 				Vector3[] positions = {v1Obj.transform.localPosition,v2Obj.transform.localPosition};
 				this.updateLineRenderPositions(positions);
 			}

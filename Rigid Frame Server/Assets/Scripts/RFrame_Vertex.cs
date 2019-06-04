@@ -32,33 +32,10 @@ namespace RigidFrame_Development
 		//public Vector3 offset;
 
 			// Use this for initialization
-		RFrame_Bridge simulator;
+		//RFrame_Bridge simulator;
 		void Start () {
-			simulator = transform.parent.parent.GetComponent<RFrame_Bridge>();
+			//simulator = transform.parent.parent.GetComponent<RFrame_Bridge>();
 		}
-		
-		// Update is called once per frame
-		// void Update () {
-		// 	// This will be where any interaction or physics based influences will occur.
-		// 	if (!lockedInPlace && simulator.fakeGravityToggle) {
-		// 		Vector3 gravityInfluence = Physics.gravity * 0.3f *Time.deltaTime;
-		// 		Vector3 updatedPosition = new Vector3(x,y,z) + gravityInfluence;
-
-		// 		// This was for the an imaginary floor
-		// 		if (updatedPosition.y < 0) {
-		// 			updatedPosition.y = 0;
-		// 		}
-
-		// 		Transform tr = GetComponent<Transform>();
-		// 		tr.localPosition = updatedPosition;
-
-		// 		//Experimenting. Updating this vertex data with tranforms position.
-		// 		x = updatedPosition.x;
-		// 		y = updatedPosition.y;
-		// 		z = updatedPosition.z;
-		// 	}
-		// }
-		
 
 		/**
 		* The different types of vertices that I can think of so far.

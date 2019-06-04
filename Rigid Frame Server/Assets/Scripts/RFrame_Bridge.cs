@@ -14,8 +14,7 @@ namespace RigidFrame_Development
 		public string LinkName;
 		public int affirmCycles = 300;
 
-		public bool fakeGravityToggle = true;
-		public bool displayStrutsOnLoad = false;
+		public bool displayFrameOnLoad = false;
 		public bool displayComponentRepsOnLoad = true;
 
 		public Text textBoxForCyclesUpdate;
@@ -47,10 +46,6 @@ namespace RigidFrame_Development
 					lastUpdate = timeCatch;
 				}
 			}
-		}
-		
-		public void toggleFakeGravity(bool setting) {
-			fakeGravityToggle = setting;
 		}
 
 		public void setNumberOfCycles() {
@@ -109,90 +104,11 @@ namespace RigidFrame_Development
 		* there's 100 cycles happening, that's 100 less loops to do per cycle.)
 		* @param affirmPerCycle How many cycles to perform.
 		*/
-		public void performCycles(RFrame_Object[] frameObjects, int affirmPerCycle) {
-			// ******************************************************************
-			// ******************************************************************
-			// ******************************************************************
-			workAlignSwitch = !workAlignSwitch; // Swap over the work alignment
-			RFrame_Strut strut;
-			if (frameObjects!=null) {
-				if(frameObjects.Length==0) { return; } // Bin out if there's nothing to work on.
-				//Debug.Log("Frame objects detected. Peforming cycles");
-				for (int i=0; i<affirmPerCycle; i++) {
-					// Pass through each frame in the array and process their vertices and struts.
-					foreach(RFrame_Object frameObject in frameObjects) {
-						// Set the adjustment values per frame.
-						//adjustmentThreshhold = 0.0f; //frameObject.GetShortestStrutLength() * 0.05f;
-						affirmRatio = 1.0f;//adjustmentThreshhold * 0.2f;
-						// Work through strut array and affirm strut lengths
-						foreach (GameObject strutGameObject in frameObject.struts) {
-							strut = strutGameObject.GetComponent<RFrame_Strut>();
-							// Collect the vertices involved with this strut.
-							RFrame_Vertex v1 = frameObject.allVertices[strut.v1].GetComponent<RFrame_Vertex>();
-							RFrame_Vertex v2 = frameObject.allVertices[strut.v2].GetComponent<RFrame_Vertex>();
-							// Get the distance between the two, along with normalised
-							// axis vector pointing in the direction of the two.
-							float[] distNormV1 = v1.distanceToVertex(v2,true);
-							strut.actualLength = distNormV1[0]; // Record the current length to the strut.
-							// No need to call the method for the other way round.
-							// Just reverse the normals.
-
-							float limitDiff = strut.distanceOutFromAcceptableRange(distNormV1[0]);// strut.length - distNormV1[0];
-							// If the difference between the length and measured distance
-							// between the two vertices, is greater than the adjustmentThreshold
-							// variable, then adjust the vertices to the correct distance
-							// IDEA - Have a think about percentage shift bias for each vertex, depending on how many struts are connected to it.
-							//if (Mathf.Abs(limitDiff)>adjustmentThreshhold) {
-								// Calculate the translation for each vertex.
-							float v1xShift = -(limitDiff*affirmRatio*distNormV1[1]);
-							float v1yShift = -(limitDiff*affirmRatio*distNormV1[2]);
-							float v1zShift = -(limitDiff*affirmRatio*distNormV1[3]);
-							// This will simply be the reverse direction.
-							float v2xShift = -v1xShift;
-							float v2yShift = -v1yShift;
-							float v2zShift = -v1zShift;
-							// Applying the translations to the vertices.
-							// Only apply if not locked in place.
-							if (!v1.lockedInPlace) {
-								v1.applyTranslation(v1xShift, v1yShift, v1zShift, this);
-							} else {
-								v1.applyTranslation(0, 0, 0, this);
-							}
-							if (!v2.lockedInPlace) {
-								v2.applyTranslation(v2xShift, v2yShift, v2zShift, this);
-							} else {
-								v2.applyTranslation(0, 0, 0, this);
-							}
-							//}
-						}
-						// For each vertex that was effected, have it's movement divided
-						// by the amount of effects applied to it.
-						foreach (GameObject vertex in frameObject.allVertices) {
-							vertex.GetComponent<RFrame_Vertex>().finaliseTranslations(this);
-						}
-						// Updating the line renderers
-						// RFrame_Strut strutPull;
-						// foreach (GameObject strutObj in frameObject.struts) {
-						// 	strutPull = strutObj.GetComponent<RFrame_Strut>();
-						// 	GameObject v1Obj = frameObject.allVertices[strutPull.v1];
-						// 	GameObject v2Obj = frameObject.allVertices[strutPull.v2];
-						// 	Vector3[] positions = {v1Obj.transform.position,v2Obj.transform.position};
-						// 	strutPull.updateLineRenderPositions(positions);
-						// }
-					}
-				}
-			}
-			
-			// ******************************************************************
-			// ******************************************************************
-			// ******************************************************************
-		}
-		
 		public void performCyclesV2(RFrame_Object[] frameObjects, int affirmPerCycle) {
 			// ******************************************************************
 			// ******************************************************************
 			// ******************************************************************
-			RFrame_Strut strut;
+			//RFrame_Strut strut;
 			if (frameObjects!=null) {
 				if(frameObjects.Length==0) { return; } // Bin out if there's nothing to work on.
 				//Debug.Log("Frame objects detected. Peforming cycles");
@@ -207,11 +123,11 @@ namespace RigidFrame_Development
 						//adjustmentThreshhold = 0.0f; //frameObject.GetShortestStrutLength() * 0.05f;
 						affirmRatio = 1.0f;//adjustmentThreshhold * 0.2f;
 						// Work through strut array and affirm strut lengths
-						foreach (GameObject strutGameObject in frameObject.struts) {
-							strut = strutGameObject.GetComponent<RFrame_Strut>();
+						foreach (RFrame_Strut strut in frameObject.allStruts) {
+							//strut = strutGameObject.GetComponent<RFrame_Strut>();
 							// Collect the vertices involved with this strut.
-							RFrame_Vertex v1 = frameObject.allVertices[strut.v1].GetComponent<RFrame_Vertex>();
-							RFrame_Vertex v2 = frameObject.allVertices[strut.v2].GetComponent<RFrame_Vertex>();
+							RFrame_Vertex v1 = frameObject.allVertices[strut.v1];
+							RFrame_Vertex v2 = frameObject.allVertices[strut.v2];
 							// Get the distance between the two, along with normalised
 							// axis vector pointing in the direction of the two.
 							float[] distNormV1 = v1.distanceToVertex(v2,true);
@@ -247,20 +163,6 @@ namespace RigidFrame_Development
 							}
 							//}
 						}
-						// For each vertex that was effected, have it's movement divided
-						// by the amount of effects applied to it.
-						// foreach (GameObject vertex in frameObject.allVertices) {
-						// 	vertex.GetComponent<RFrame_Vertex>().finaliseTranslations(this);
-						// }
-						// Updating the line renderers
-						// RFrame_Strut strutPull;
-						// foreach (GameObject strutObj in frameObject.struts) {
-						// 	strutPull = strutObj.GetComponent<RFrame_Strut>();
-						// 	GameObject v1Obj = frameObject.allVertices[strutPull.v1];
-						// 	GameObject v2Obj = frameObject.allVertices[strutPull.v2];
-						// 	Vector3[] positions = {v1Obj.transform.position,v2Obj.transform.position};
-						// 	strutPull.updateLineRenderPositions(positions);
-						// }
 					}
 				}
 			}

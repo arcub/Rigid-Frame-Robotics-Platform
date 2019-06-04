@@ -31,9 +31,9 @@ namespace RigidFrame_Development
 		void Update () {
 			// Position the attached mesh to the centre vertex
 			RFrame_Object parentFrame = transform.parent.gameObject.GetComponent<RFrame_Object>();
-			GameObject centerObj = parentFrame.allVertices[this.centerVertex];
-			GameObject upObj = parentFrame.allVertices[this.upVertex];
-			GameObject forwardObj = parentFrame.allVertices[this.forwardVertex];
+			GameObject centerObj = parentFrame.allGameObjectVertices[this.centerVertex];
+			GameObject upObj = parentFrame.allGameObjectVertices[this.upVertex];
+			GameObject forwardObj = parentFrame.allGameObjectVertices[this.forwardVertex];
 			Vector3 upVertex = upObj.transform.localPosition - centerObj.transform.localPosition;
 			Vector3 forwardVertex = forwardObj.transform.localPosition - centerObj.transform.localPosition;
 			Quaternion orientation = Quaternion.LookRotation(forwardVertex, upVertex);

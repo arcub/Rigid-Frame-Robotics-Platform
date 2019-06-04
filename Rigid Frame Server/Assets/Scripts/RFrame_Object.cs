@@ -14,8 +14,10 @@ namespace RigidFrame_Development
 		string frameName;
 		float shortestStrutLength = -1f;
 		
-		public List<GameObject> allVertices; // Array of all Fvertex objects. Each Fvertex object has an array of Fstruts
-		public List<GameObject> struts; // Array of Fstrut objects.
+		public List<GameObject> allGameObjectVertices; // Array of all Fvertex objects. Each Fvertex object has an array of Fstruts
+		public List<GameObject> allGameObjectStruts; // Array of GameObject Fstrut objects.
+		public List<RFrame_Vertex> allVertices; // Array of all RFrame_Vertices.
+		public List<RFrame_Strut> allStruts; // Array of RFrame_Struts.
 		public List<GameObject> angleLinks; // Array of angle measurer links.
 		public List<GameObject> compReps; // Array of component representors.
 		public TextAsset objFileToBuildFrom = null;
@@ -54,8 +56,10 @@ namespace RigidFrame_Development
 
 			string[] inFile = objFile.text.Split('\n');
 			
-			List<GameObject> verticesBuild = new List<GameObject>();
-			List<GameObject> strutBuild = new List<GameObject>();
+			List<GameObject> verticesGameObjectBuild = new List<GameObject>();
+			List<GameObject> strutGameObjectBuild = new List<GameObject>();
+			List<RFrame_Vertex> verticesBuild = new List<RFrame_Vertex>();
+			List<RFrame_Strut> strutsBuild = new List<RFrame_Strut>();
 			List<GameObject> angleViewBuild = new List<GameObject>();
 			List<GameObject> compRepBuild = new List<GameObject>();
 			List<GameObject> balPosBuild = new List<GameObject>();
@@ -88,7 +92,8 @@ namespace RigidFrame_Development
 							vertexScript.lockedInPlace = true;
 						}
 					}
-					verticesBuild.Add(vertexGameObject);
+					verticesGameObjectBuild.Add(vertexGameObject);
+					verticesBuild.Add(vertexScript);
 					vertexIndex++;
 					
 				} else if (objLine.StartsWith("l")) {
@@ -99,11 +104,11 @@ namespace RigidFrame_Development
 					// Remember that indexes start at 1 in the obj/txt file and need converting to zero-indexed.
 					int v1 = int.Parse(splits[1]) - 1;
 					int v2 = int.Parse(splits[2]) - 1;
-					GameObject strutGameObject = RFrame_Object.createStrutIfNotExisting(this, StrutInstantiator, strutBuild, v1, v2);
+					GameObject strutGameObject = RFrame_Object.createStrutIfNotExisting(this, StrutInstantiator, strutGameObjectBuild, strutsBuild, v1, v2);
 					// Check if strut is displayed. This is determined by having more than three entries in splits.
 					// Basically any character entered after the 2 indexes will trigger this.
 					//if(strutGameObject!=null && splits.Length > 3) {
-					if (splits.Length==5) {
+					if (splits.Length==5 && strutGameObject!=null) {
 						RFrame_Strut strutScript = strutGameObject.GetComponent<RFrame_Strut>();
 						strutScript.minLength = float.Parse(splits[3]);
 						strutScript.maxLength = float.Parse(splits[4]);
@@ -111,7 +116,7 @@ namespace RigidFrame_Development
 					// All line renderers will be switched off.
 					LineRenderer lineRenderer = strutGameObject.GetComponent<LineRenderer>();
 					// Used when debugging the a fresh OBJ frame.
-					lineRenderer.enabled = transform.GetComponentInParent<RFrame_Bridge>().displayStrutsOnLoad;
+					lineRenderer.enabled = transform.GetComponentInParent<RFrame_Bridge>().displayFrameOnLoad;
 					//}
 				} else if (objLine.StartsWith("anglink")) {
 					// Angle link entry.
@@ -186,7 +191,7 @@ namespace RigidFrame_Development
 					GameObject balPolObj = Instantiate(BalancePositionInstantiator, this.transform);
 					BMod_BalancePosition balPosMod = balPolObj.GetComponent<BMod_BalancePosition>();
 					balPosMod.restrictionAreaShrinkRatio = reduceRatio;
-					balPosMod.controlVertex = verticesBuild[vertexAttachIndex].GetComponent<RFrame_Vertex>();
+					balPosMod.controlVertex = verticesGameObjectBuild[vertexAttachIndex].GetComponent<RFrame_Vertex>();
 					//balPosMod.controlVertex.lockedInPlace = true;
 					balPosBuild.Add(balPolObj);
 				} else if (objLine.StartsWith("dishol")) {
@@ -198,7 +203,7 @@ namespace RigidFrame_Development
 					int typeOfDisHol = int.Parse(splits[4]);
 					GameObject disHolObj = Instantiate(DistanceHolderInstantiator, balPosBuild[balPosIndex].transform);
 					BMod_DistanceHolder disHolMod = disHolObj.GetComponent<BMod_DistanceHolder>();
-					disHolMod.vertexPoint = verticesBuild[vertexAttachIndex].GetComponent<RFrame_Vertex>();
+					disHolMod.vertexPoint = verticesGameObjectBuild[vertexAttachIndex].GetComponent<RFrame_Vertex>();
 					// Experimenting with not locking the vertex in place.
 					// Need to make sure frame doesn't move out of place.
 					disHolMod.vertexPoint.lockedInPlace = true;
@@ -218,7 +223,7 @@ namespace RigidFrame_Development
 					int typeOfAnchor = int.Parse(splits[4]);
 					GameObject anchorObj = Instantiate(AnchorPointInstantiator, disHolBuild[disHolIndex].transform);
 					BMod_AnchorPoint anchorMod = anchorObj.GetComponent<BMod_AnchorPoint>();
-					anchorMod.anchorVertex = verticesBuild[vertexAttachIndex].GetComponent<RFrame_Vertex>();
+					anchorMod.anchorVertex = verticesGameObjectBuild[vertexAttachIndex].GetComponent<RFrame_Vertex>();
 					anchorMod.anchorVertex.lockedInPlace = true;
 					anchorMod.priorityIndex = priorityValue;
 					switch (typeOfAnchor) {
@@ -233,7 +238,7 @@ namespace RigidFrame_Development
 			// Set the parents of the objects instatiated to this object and
 			// call the function for calculating all the distances between
 			// struts.
-			if (verticesBuild.Count!=0 && strutBuild.Count!=0) {
+			if (verticesGameObjectBuild.Count!=0 && strutGameObjectBuild.Count!=0) {
 				// Apply the created vertices and struts to this object.
 				// Set the parent of the vertices and struts to the transform of this frame object.
 				// foreach (GameObject vertex in verticesBuild) {
@@ -242,8 +247,10 @@ namespace RigidFrame_Development
 				// foreach (GameObject strut in strutBuild) {
 				// 	strut.transform.SetParent(this.transform);
 				// }
+				allGameObjectVertices = verticesGameObjectBuild;
+				allGameObjectStruts = strutGameObjectBuild;
 				allVertices = verticesBuild;
-				struts = strutBuild;
+				allStruts = strutsBuild;
 				angleLinks = angleViewBuild;
 				compReps = compRepBuild;
 				this.calculateDistancesThenOrientate();
@@ -255,7 +262,7 @@ namespace RigidFrame_Development
 			}
 		}
 		
-		static GameObject createStrutIfNotExisting(RFrame_Object frameObject, GameObject strutInstantiator, List<GameObject> strutsCheck, int v1, int v2) {
+		static GameObject createStrutIfNotExisting(RFrame_Object frameObject, GameObject strutInstantiator, List<GameObject> strutsCheck, List<RFrame_Strut> strutsRaw, int v1, int v2) {
 			RFrame_Strut strutToCheck;
 			bool foundExistingStrut = false;
 			//if (strutsCheck.Count==0) return false;
@@ -274,6 +281,7 @@ namespace RigidFrame_Development
 				newStrut.v1 = v1;
 				newStrut.v2 = v2;
 				strutsCheck.Add(strutGameObject);
+				strutsRaw.Add(newStrut);
 				return strutGameObject;
 			}
 			return null;//foundExistingStrut;
@@ -287,10 +295,10 @@ namespace RigidFrame_Development
 		
 		public void calculateDistancesThenOrientate() {
 			RFrame_Strut strutPull;
-			foreach (GameObject strutObject in struts) {
+			foreach (GameObject strutObject in allGameObjectStruts) {
 				strutPull = strutObject.GetComponent<RFrame_Strut>();
-				GameObject v1Obj = allVertices[strutPull.v1];
-				GameObject v2Obj = allVertices[strutPull.v2];
+				GameObject v1Obj = allGameObjectVertices[strutPull.v1];
+				GameObject v2Obj = allGameObjectVertices[strutPull.v2];
 				RFrame_Vertex v1 = v1Obj.GetComponent<RFrame_Vertex>();
 				RFrame_Vertex v2 = v2Obj.GetComponent<RFrame_Vertex>();
 				strutPull.length = Mathf.Abs(v1.distanceToVertex(v2, false)[0]);

@@ -50,7 +50,7 @@ namespace RigidFrame_Development
 		void Update () {
 			// Update this game objects position to be by the angle joint.
 			RFrame_Object parentFrame = transform.parent.gameObject.GetComponent<RFrame_Object>();
-			GameObject centerObj = parentFrame.allVertices[this.centerVertex];
+			GameObject centerObj = parentFrame.allGameObjectVertices[this.centerVertex];
 			transform.localPosition = centerObj.transform.localPosition;
 			// Call the angle measuring function.
 			measureAngle();
@@ -59,10 +59,10 @@ namespace RigidFrame_Development
 
 		public void measureAngle(bool measuringInitialAngle = false) {
 			RFrame_Object parentFrame = transform.parent.gameObject.GetComponent<RFrame_Object>();
-			GameObject centerObj = parentFrame.allVertices[this.centerVertex];
-			GameObject upObj = parentFrame.allVertices[this.upVertex];
-			GameObject measure1Obj = parentFrame.allVertices[this.measure1];
-			GameObject measure2Obj = parentFrame.allVertices[this.measure2];
+			GameObject centerObj = parentFrame.allGameObjectVertices[this.centerVertex];
+			GameObject upObj = parentFrame.allGameObjectVertices[this.upVertex];
+			GameObject measure1Obj = parentFrame.allGameObjectVertices[this.measure1];
+			GameObject measure2Obj = parentFrame.allGameObjectVertices[this.measure2];
 			Vector3 measure1Vertex = measure1Obj.transform.localPosition - centerObj.transform.localPosition;
 			Vector3 measure2Vertex = measure2Obj.transform.localPosition - centerObj.transform.localPosition;
 			

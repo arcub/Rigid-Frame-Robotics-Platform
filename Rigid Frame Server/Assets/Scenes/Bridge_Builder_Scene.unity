@@ -3593,8 +3593,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LinkName: TestLink
   affirmCycles: 200
-  fakeGravityToggle: 0
-  displayStrutsOnLoad: 1
+  displayFrameOnLoad: 1
   displayComponentRepsOnLoad: 1
   textBoxForCyclesUpdate: {fileID: 1729920676}
   inputFieldForNumCycles: {fileID: 261605335}
