@@ -3602,7 +3602,7 @@ MonoBehaviour:
   LinkName: TestLink
   affirmCycles: 200
   displayFrameOnLoad: 1
-  displayComponentRepsOnLoad: 0
+  displayComponentRepsOnLoad: 1
   textBoxForCyclesUpdate: {fileID: 1729920676}
   inputFieldForNumCycles: {fileID: 261605335}
   maxSpeedOnBalPols: {fileID: 1106132993}
